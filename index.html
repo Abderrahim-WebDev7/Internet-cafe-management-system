@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة مقهى الإنترنت المتقدم</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            opacity: 0.9;
+        }
+
+        /* إحصائيات عامة */
+        .summary-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .summary-number {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        /* شبكة الأجهزة */
+        .computers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* كارت الجهاز */
+        .computer-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .computer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: #ddd;
+        }
+
+        .computer-card.free::before { background: linear-gradient(90deg, #28a745, #20c997); }
+        .computer-card.active::before { background: linear-gradient(90deg, #007bff, #0056b3); }
+        .computer-card.paused::before { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+        .computer-card.warning::before { background: linear-gradient(90deg, #fd7e14, #dc3545); }
+        .computer-card.expired::before { background: linear-gradient(90deg, #dc3545, #6f1516); }
+
+        .computer-card.free { border-color: #28a745; }
+        .computer-card.active { border-color: #007bff; }
+        .computer-card.paused { border-color: #ffc107; }
+        .computer-card.warning { border-color: #fd7e14; }
+        .computer-card.expired { border-color: #dc3545; }
+
+        /* رأس الكارت */
+        .computer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .computer-number {
+            font-size: clamp(1.3rem, 2.5vw, 1.5rem);
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        .status.free { background: #28a745; }
+        .status.active { background: #007bff; }
+        .status.paused { background: #ffc107; color: #212529; }
+        .status.warning { background: #fd7e14; }
+        .status.expired { background: #dc3545; }
+
+        /* قسم الإحصائيات */
+        .stats-section {
+            background: linear-gradient(135deg, #e9ecef, #f8f9fa);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #007bff;
+        }
+
+        .stats-title {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* قسم الإدخال */
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .input-group label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 0.95rem;
+            min-width: 70px;
+        }
+
+        .input-group input {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .price-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* شاشة التوقيت */
+        .timer-display {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            border: 2px solid #dee2e6;
+        }
+
+        .time-remaining {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .time-remaining.warning { color: #fd7e14; }
+        .time-remaining.expired { color: #dc3545; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #dee2e6;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .progress-fill.warning { background: linear-gradient(90deg, #fd7e14, #dc3545); }
+        .progress-fill.expired { background: linear-gradient(90deg, #dc3545, #6f1516); }
+
+        .session-info {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        /* أزرار التحكم */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-pause {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+        }
+
+        .btn-resume {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #dc3545, #bd2130);
+            color: white;
+        }
+
+        /* التنبيهات */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+        }
+
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #dc3545, #bd2130);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: center;
+            z-index: 1000;
+            min-width: 350px;
+            max-width: 90vw;
+            animation: notificationPop 0.4s ease;
+        }
+
+        @keyframes notificationPop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .notification-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .notification-content {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .notification-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .notification-btn:hover {
+            background: white;
+            color: #dc3545;
+            transform: scale(1.05);
+        }
+
+        /* تأثيرات الوميض */
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.4; }
+        }
+
+        /* التصميم المتجاوب */
+        @media (max-width: 1200px) {
+            .computers-grid {
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 18px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            
+            .computers-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .computer-card { padding: 18px; }
+            
+            .summary-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 18px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group label {
+                min-width: auto;
+                margin-bottom: 5px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .summary-bar {
+                grid-template-columns: 1fr;
+            }
+            
+            .computer-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .notification {
+                min-width: 300px;
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖥️ نظام إدارة مقهى الإنترنت </h1>
+        <p>إدارة 9 أجهزة كمبيوتر - سعر الساعة: 200 دج</p>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item">
+            <div class="summary-number" id="activeCount">0</div>
+            <div class="summary-label">أجهزة نشطة</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="freeCount">9</div>
+            <div class="summary-label">أجهزة متاحة</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="pausedCount">0</div>
+            <div class="summary-label">أجهزة متوقفة</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="totalSessions">0</div>
+            <div class="summary-label">إجمالي الجلسات</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-number" id="totalRevenue">0</div>
+            <div class="summary-label">إجمالي الإيرادات (دج)</div>
+        </div>
+    </div>
+
+    <div class="computers-grid" id="computersGrid">
+        <!-- سيتم إنشاء كروت الأجهزة هنا -->
+    </div>
+
+    <script>
+        class InternetCafeManager {
+            constructor() {
+                this.computers = [];
+                this.hourlyRate = 200; // 200 دج للساعة
+                this.totalRevenue = 0;
+                this.totalSessions = 0;
+                this.init();
+            }
+
+            init() {
+                // إنشاء 9 أجهزة
+                for (let i = 1; i <= 9; i++) {
+                    this.computers.push({
+                        id: i,
+                        isActive: false,
+                        isPaused: false,
+                        startTime: null,
+                        endTime: null,
+                        pauseStartTime: null,
+                        totalPausedTime: 0,
+                        remainingTime: 0,
+                        currentSessionAmount: 0,
+                        sessionsCount: 0,
+                        totalRevenue: 0
+                    });
+                }
+                this.renderComputers();
+                this.startTimer();
+                this.updateSummary();
+            }
+
+            renderComputers() {
+                const grid = document.getElementById('computersGrid');
+                grid.innerHTML = '';
+
+                this.computers.forEach(computer => {
+                    const card = this.createComputerCard(computer);
+                    grid.appendChild(card);
+                });
+            }
+
+            createComputerCard(computer) {
+                const div = document.createElement('div');
+                div.className = `computer-card ${this.getStatus(computer)}`;
+                
+                div.innerHTML = `
+                    <div class="computer-header">
+                        <div class="computer-number">جهاز ${computer.id}</div>
+                        <div class="status ${this.getStatus(computer)}">${this.getStatusText(computer)}</div>
+                    </div>
+
+                    <div class="stats-section">
+                        <div class="stats-title">📊 إحصائيات الجهاز</div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">عدد الجلسات:</span>
+                                <span class="stat-value">${computer.sessionsCount}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">إجمالي الإيرادات:</span>
+                                <span class="stat-value">${computer.totalRevenue} دج</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-section">
+                        <div class="input-group">
+                            <label>⏰ الوقت:</label>
+                            <input type="number" id="hours-${computer.id}" placeholder="ساعات" min="0" step="0.5">
+                            <input type="number" id="minutes-${computer.id}" placeholder="دقائق" min="0" max="59">
+                        </div>
+                        <div class="input-group">
+                            <label>💰 المبلغ:</label>
+                            <input type="number" id="amount-${computer.id}" placeholder="دينار جزائري" min="0">
+                            <span class="price-info">200 دج/ساعة</span>
+                        </div>
+                    </div>
+
+                    <div class="timer-display">
+                        <div class="time-remaining ${this.getTimeClass(computer)}" id="time-${computer.id}">
+                            ${this.formatTime(computer.remainingTime)}
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${this.getTimeClass(computer)}" id="progress-${computer.id}" 
+                                 style="width: ${this.getProgressWidth(computer)}%"></div>
+                        </div>
+                        <div class="session-info">
+                            المبلغ الحالي: ${computer.currentSessionAmount} دج
+                            ${computer.isPaused ? '<br><strong>⏸️ الجلسة متوقفة مؤقتاً</strong>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn-start" onclick="manager.startComputer(${computer.id})" 
+                                ${computer.isActive ? 'disabled' : ''}>
+                            🚀 تشغيل
+                        </button>
+                        <button class="btn btn-add" onclick="manager.addTime(${computer.id})" 
+                                ${!computer.isActive ? 'disabled' : ''}>
+                            ➕ إضافة وقت
+                        </button>
+                        ${computer.isPaused ? 
+                            `<button class="btn btn-resume" onclick="manager.resumeComputer(${computer.id})" 
+                                     ${!computer.isActive ? 'disabled' : ''}>
+                                ▶️ استئناف
+                            </button>` :
+                            `<button class="btn btn-pause" onclick="manager.pauseComputer(${computer.id})" 
+                                     ${!computer.isActive ? 'disabled' : ''}>
+                                ⏸️ إيقاف مؤقت
+                            </button>`
+                        }
+                        <button class="btn btn-stop" onclick="manager.stopComputer(${computer.id})" 
+                                ${!computer.isActive ? 'disabled' : ''}>
+                            ⏹️ إيقاف
+                        </button>
+                    </div>
+                `;
+                
+                return div;
+            }
+
+            getStatus(computer) {
+                if (!computer.isActive) return 'free';
+                if (computer.isPaused) return 'paused';
+                if (computer.remainingTime <= 0) return 'expired';
+                if (computer.remainingTime <= 300) return 'warning'; // آخر 5 دقائق
+                return 'active';
+            }
+
+            getStatusText(computer) {
+                const status = this.getStatus(computer);
+                switch (status) {
+                    case 'free': return '✅ متاح';
+                    case 'active': return '🔥 يعمل';
+                    case 'paused': return '⏸️ متوقف مؤقتاً';
+                    case 'warning': return '⚠️ ينتهي قريباً';
+                    case 'expired': return '🚨 انتهى الوقت';
+                    default: return '✅ متاح';
+                }
+            }
+
+            getTimeClass(computer) {
+                if (!computer.isActive) return '';
+                if (computer.remainingTime <= 0) return 'expired';
+                if (computer.remainingTime <= 300) return 'warning';
+                return '';
+            }
+
+            getProgressWidth(computer) {
+                if (!computer.isActive || !computer.startTime || !computer.endTime) return 0;
+                
+                const totalDuration = computer.endTime - computer.startTime;
+                const now = Date.now();
+                let elapsed;
+                
+                if (computer.isPaused) {
+                    elapsed = computer.pauseStartTime - computer.startTime - computer.totalPausedTime;
+                } else {
+                    elapsed = now - computer.startTime - computer.totalPausedTime;
+                }
+                
+                return Math.max(0, Math.min(100, ((totalDuration - elapsed) / totalDuration) * 100));
+            }
+
+            formatTime(seconds) {
+                if (seconds <= 0) return '00:00:00';
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            calculateTimeFromAmount(amount) {
+                return Math.floor((amount / this.hourlyRate) * 3600);
+            }
+
+            startComputer(id) {
+                const computer = this.computers[id - 1];
+                const hoursInput = document.getElementById(`hours-${id}`);
+                const minutesInput = document.getElementById(`minutes-${id}`);
+                const amountInput = document.getElementById(`amount-${id}`);
+
+                let timeToAdd = 0;
+                let amountPaid = 0;
+
+                if (amountInput.value) {
+                    amountPaid = parseInt(amountInput.value);
+                    timeToAdd = this.calculateTimeFromAmount(amountPaid);
+                } else if (hoursInput.value || minutesInput.value) {
+                    const hours = parseFloat(hoursInput.value || 0);
+                    const minutes = parseInt(minutesInput.value || 0);
+                    timeToAdd = (hours * 3600) + (minutes * 60);
+                    amountPaid = Math.ceil((timeToAdd / 3600) * this.hourlyRate);
+                }
+
+                if (timeToAdd <= 0) {
+                    alert('⚠️ الرجاء إدخال الوقت أو المبلغ');
+                    return;
+                }
+
+                const now = Date.now();
+                computer.isActive = true;
+                computer.isPaused = false;
+                computer.startTime = now;
+                computer.endTime = now + (timeToAdd * 1000);
+                computer.remainingTime = timeToAdd;
+                computer.currentSessionAmount = amountPaid;
+                computer.totalPausedTime = 0;
+
+                // تحديث الإيرادات
+                computer.totalRevenue += amountPaid;
+                this.totalRevenue += amountPaid;
+
+                // مسح الحقول
+                hoursInput.value = '';
+                minutesInput.value = '';
+                amountInput.value = '';
+
+                this.renderComputers();
+                this.updateSummary();
+            }
+
+            pauseComputer(id) {
+                const computer = this.computers[id - 1];
+                if (!computer.isActive || computer.isPaused) return;
+
+                computer.isPaused = true;
+                computer.pauseStartTime = Date.now();
+                
+                this.renderComputers();
+                this.updateSummary();
+            }
+
+            resumeComputer(id) {
+                const computer = this.computers[id - 1];
+                if (!computer.isActive || !computer.isPaused) return;
+
+                computer.isPaused = false;
+                computer.totalPausedTime += Date.now() - computer.pauseStartTime;
+                computer.pauseStartTime = null;
+                
+                this.renderComputers();
+                this.updateSummary();
+            }
+
+            addTime(id) {
+                const computer = this.computers[id - 1];
+                if (!computer.isActive) return;
+
+                const hoursInput = document.getElementById(`hours-${id}`);
+                const minutesInput = document.getElementById(`minutes-${id}`);
+                const amountInput = document.getElementById(`amount-${id}`);
+
+                let timeToAdd = 0;
+                let amountPaid = 0;
+
+                if (amountInput.value) {
+                    amountPaid = parseInt(amountInput.value);
+                    timeToAdd = this.calculateTimeFromAmount(amountPaid);
+                } else if (hoursInput.value || minutesInput.value) {
+                    const hours = parseFloat(hoursInput.value || 0);
+                    const minutes = parseInt(minutesInput.value || 0);
+                    timeToAdd = (hours * 3600) + (minutes * 60);
+                    amountPaid = Math.ceil((timeToAdd / 3600) * this.hourlyRate);
+                }
+
+                if (timeToAdd <= 0) {
+                    alert('⚠️ الرجاء إدخال الوقت أو المبلغ للإضافة');
+                    return;
+                }
+
+                computer.endTime += timeToAdd * 1000;
+                computer.remainingTime += timeToAdd;
+                computer.currentSessionAmount += amountPaid;
+                computer.totalRevenue += amountPaid;
+                this.totalRevenue += amountPaid;
+
+                // مسح الحقول
+                hoursInput.value = '';
+                minutesInput.value = '';
+                amountInput.value = '';
+
+                this.renderComputers();
+                this.updateSummary();
+            }
+
+            stopComputer(id) {
+                const computer = this.computers[id - 1];
+                if (!computer.isActive) return;
+
+                // زيادة عداد الجلسات عند إيقاف الجهاز
+                computer.sessionsCount++;
+                this.totalSessions++;
+
+                // إعادة تعيين حالة الجهاز
+                computer.isActive = false;
+                computer.isPaused = false;
+                computer.startTime = null;
+                computer.endTime = null;
+                computer.remainingTime = 0;
+                computer.currentSessionAmount = 0;
+                computer.totalPausedTime = 0;
+                computer.pauseStartTime = null;
+                
+                this.renderComputers();
+                this.updateSummary();
+            }
+
+            updateSummary() {
+                const activeCount = this.computers.filter(c => c.isActive && !c.isPaused).length;
+                const pausedCount = this.computers.filter(c => c.isPaused).length;
+                const freeCount = this.computers.filter(c => !c.isActive).length;
+
+                document.getElementById('activeCount').textContent = activeCount;
+                document.getElementById('pausedCount').textContent = pausedCount;
+                document.getElementById('freeCount').textContent = freeCount;
+                document.getElementById('totalSessions').textContent = this.totalSessions;
+                document.getElementById('totalRevenue').textContent = this.totalRevenue;
+            }
+
+            showNotification(message, isExpired = false) {
+                // إزالة التنبيهات السابقة
+                document.querySelectorAll('.notification, .overlay').forEach(el => el.remove());
+
+                // إنشاء خلفية معتمة
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay';
+
+                // إنشاء التنبيه
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                
+                notification.innerHTML = `
+                    <div class="notification-icon">${isExpired ? '⏰' : '⚠️'}</div>
+                    <div class="notification-content">${message}</div>
+                    <button class="notification-btn" onclick="manager.closeNotification()">
+                        ${isExpired ? 'تم الاطلاع ✅' : 'حسناً 👍'}
+                    </button>
+                `;
+
+                document.body.appendChild(overlay);
+                document.body.appendChild(notification);
+
+                // تشغيل صوت التنبيه
+                this.playSound();
+
+                // إغلاق تلقائي للتنبيهات العادية فقط (ليس للمنتهية)
+                if (!isExpired) {
+                    setTimeout(() => {
+                        this.closeNotification();
+                    }, 5000);
+                }
+            }
+
+            closeNotification() {
+                document.querySelectorAll('.notification, .overlay').forEach(el => el.remove());
+            }
+
+            playSound() {
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 1);
+                } catch (e) {
+                    console.log('لا يمكن تشغيل الصوت');
+                }
+            }
+
+            startTimer() {
+                setInterval(() => {
+                    this.computers.forEach(computer => {
+                        if (computer.isActive && !computer.isPaused) {
+                            const now = Date.now();
+                            const elapsed = now - computer.startTime - computer.totalPausedTime;
+                            const totalDuration = computer.endTime - computer.startTime;
+                            computer.remainingTime = Math.max(0, Math.floor((totalDuration - elapsed) / 1000));
+                            
+                            // التحقق من انتهاء الوقت
+                            if (computer.remainingTime <= 0) {
+                                // زيادة عداد الجلسات
+                                computer.sessionsCount++;
+                                this.totalSessions++;
+                                
+                                // عرض تنبيه لا يختفي تلقائياً
+                                this.showNotification(
+                                    `🚨 انتهى وقت الجهاز ${computer.id}!\n\n` +
+                                    `💰 المبلغ المدفوع: ${computer.currentSessionAmount} دج\n` +
+                                    `🎯 عدد جلسات هذا الجهاز: ${computer.sessionsCount}\n` +
+                                    `💵 إجمالي إيرادات الجهاز: ${computer.totalRevenue} دج`, 
+                                    true
+                                );
+                                
+                                // إيقاف الجهاز
+                                computer.isActive = false;
+                                computer.isPaused = false;
+                                computer.startTime = null;
+                                computer.endTime = null;
+                                computer.currentSessionAmount = 0;
+                                computer.totalPausedTime = 0;
+                                computer.pauseStartTime = null;
+                                
+                                this.renderComputers();
+                                this.updateSummary();
+                            }
+                            // تنبيه 5 دقائق
+                            else if (computer.remainingTime === 300) {
+                                this.showNotification(`⚠️ تبقى 5 دقائق للجهاز ${computer.id}`);
+                            }
+                            // تنبيه دقيقة واحدة
+                            else if (computer.remainingTime === 60) {
+                                this.showNotification(`🔔 تبقى دقيقة واحدة للجهاز ${computer.id}!`);
+                            }
+                            // تنبيه 30 ثانية
+                            else if (computer.remainingTime === 30) {
+                                this.showNotification(`⏰ تبقى 30 ثانية للجهاز ${computer.id}!`);
+                            }
+                        }
+                    });
+                    
+                    this.updateDisplay();
+                }, 1000);
+            }
+
+            updateDisplay() {
+                this.computers.forEach(computer => {
+                    const timeDisplay = document.getElementById(`time-${computer.id}`);
+                    const progressBar = document.getElementById(`progress-${computer.id}`);
+                    
+                    if (timeDisplay) {
+                        timeDisplay.textContent = this.formatTime(computer.remainingTime);
+                        timeDisplay.className = `time-remaining ${this.getTimeClass(computer)}`;
+                        
+                        // تأثير الوميض للوقت المنتهي قريباً
+                        if (computer.isActive && computer.remainingTime <= 60 && computer.remainingTime > 0) {
+                            timeDisplay.classList.add('blink');
+                        } else {
+                            timeDisplay.classList.remove('blink');
+                        }
+                    }
+                    
+                    if (progressBar) {
+                        progressBar.style.width = this.getProgressWidth(computer) + '%';
+                        progressBar.className = `progress-fill ${this.getTimeClass(computer)}`;
+                    }
+                });
+                
+                this.updateSummary();
+            }
+        }
+
+        // تشغيل النظام
+        const manager = new InternetCafeManager();
+
+        // حماية من الخروج عند وجود جلسات نشطة
+        window.addEventListener('beforeunload', function(e) {
+            const activeComputers = manager.computers.filter(c => c.isActive);
+            if (activeComputers.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'يوجد أجهزة نشطة. هل تريد الخروج فعلاً؟';
+                return e.returnValue;
+            }
+        });
+
+        // إغلاق التنبيه بالضغط على Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                manager.closeNotification();
+            }
+        });
+
+        // التحديث التلقائي لعرض الوقت
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                manager.updateDisplay();
+            }
+        });
+
+        window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+});
+
+// منع اختصارات لوحة المفاتيح
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+        e.preventDefault();
+        return false;
+    }
+});
+    </script>
+</body>
+</html>
